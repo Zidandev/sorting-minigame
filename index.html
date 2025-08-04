@@ -559,14 +559,22 @@
   function finishGame() {
     const final = score;
 
+    // Selalu tampilkan alert terlebih dahulu
+    alert("Mini game selesai! Skor: " + final + "\n\nUntuk Android: Keluar dari browser dan kembali ke game.");
+
     if (window.renpy && typeof window.renpy.return === "function") {
       window.renpy.return(final);
       setTimeout(() => {
         window.close();
       }, 200);
     } else {
-      alert("Mini game selesai! Skor: " + final);
-      window.close();
+      // Coba tutup window, jika tidak bisa (mobile browser) beri instruksi
+      try {
+        window.close();
+      } catch (e) {
+        // Jika window.close() gagal (common di mobile), tampilkan instruksi
+        alert("Silakan keluar dari browser dan kembali ke game utama.");
+      }
     }
   }
 
