@@ -275,17 +275,22 @@
     setTimeout(() => bub.remove(), 700);
   }
 
-  function finishGame() {
+ function finishGame() {
     const final = score;
-    setTimeout(() => {
-      if (window.renpy && typeof window.renpy.return === "function") {
-        window.renpy.return(final);
-      } else {
-        alert("Mini game selesai! Skor: " + final);
-      }
-    }, 200);
-  }
 
+    // Kirim ke Ren'Py kalau ada
+    if (window.renpy && typeof window.renpy.return === "function") {
+      window.renpy.return(final);
+      // kasih waktu singkat agar Ren'Py terima, lalu tutup
+      setTimeout(() => {
+        window.close();
+      }, 200);
+    } else {
+      // Fallback: tampilkan pesan, lalu tutup setelah user OK
+      alert("Mini game selesai! Skor: " + final);
+      window.close();
+    }
+  }
   // spawn loop:
   spawnTrash();
   spawnInterval = setInterval(() => {
