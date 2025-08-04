@@ -1,126 +1,306 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sorting Sampah Minigame</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .trash-item {
-      width: 60px;
-      height: 60px;
-      cursor: grab;
-      transition: transform 0.2s ease;
-    }
-    .trash-item:active {
-      transform: scale(1.1);
-      cursor: grabbing;
-    }
-    .bin {
-      width: 120px;
-      height: 120px;
-      border: 2px dashed #ccc;
-      border-radius: 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      transition: border-color 0.3s ease;
-    }
-    .bin.hovered {
-      border-color: #4ade80;
-      background-color: rgba(74, 222, 128, 0.2);
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Eco Love - Sorting Minigame</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body {
+    background: linear-gradient(135deg, #e0f2f1, #ffffff);
+    font-family: system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  }
+  .trash {
+    width: 60px;
+    height: 60px;
+    position: absolute;
+    cursor: grab;
+    user-select: none;
+    transition: transform .1s;
+    z-index: 10;
+  }
+  .bin {
+    width: 120px; height: 120px;
+    border: 3px dashed #9ca3af;
+    border-radius: 12px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    box-shadow: 0 6px 18px -4px rgba(0,0,0,0.08);
+    transition: border-color .2s, background .2s;
+  }
+  .bin.active {
+    border-color: #22c55e;
+    background: rgba(34,197,94,0.08);
+  }
+  #playfield {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f9fafb;
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.05);
+  }
+  .fade-out {
+    animation: fadeOut 0.5s forwards;
+  }
+  @keyframes fall {
+    from { top: -80px; }
+    to { top: 260px; }
+  }
+  @keyframes fadeOut {
+    to { opacity: 0; transform: scale(.8); }
+  }
+</style>
 </head>
-<body class="bg-gradient-to-br from-green-100 to-green-300 min-h-screen flex flex-col items-center p-6">
+<body class="min-h-screen flex flex-col items-center p-6">
 
-  <h1 class="text-3xl font-bold text-green-800 mb-4">Sorting Sampah</h1>
-  <p class="text-gray-700 mb-6 text-center max-w-lg">
-    Drag & drop sampah ke tempat sampah yang benar. Setelah selesai, klik tombol "Kembali ke Game".
-  </p>
+  <div class="w-full max-w-3xl">
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h1 class="text-3xl font-bold text-green-700">Sorting Sampah</h1>
+        <p class="text-sm text-gray-600">Tarik sampah ke tempat yang benar sebelum jatuh. Capai skor 100 untuk selesai otomatis.</p>
+      </div>
+      <div class="text-right">
+        <div id="score" class="text-xl font-semibold text-gray-800">Skor: 0</div>
+        <div id="progress" class="text-xs text-gray-500">Target: 100</div>
+      </div>
+    </div>
 
-  <!-- Area bins -->
-  <div class="flex gap-6 mb-8">
-    <div class="bin" data-type="organik">
-      <img src="images/tempat_organik.png" alt="Organik" class="w-20">
+    <!-- Bins -->
+    <div class="flex gap-8 justify-center mb-6">
+      <div class="bin" data-type="organik">
+        <div class="text-center">
+          <img src="images/tempat_organik.png" alt="Organik" class="w-16 mx-auto" />
+          <div class="text-sm font-semibold text-green-700 mt-1">Organik</div>
+        </div>
+      </div>
+      <div class="bin" data-type="anorganik">
+        <div class="text-center">
+          <img src="images/tempat_anorganik.png" alt="Anorganik" class="w-16 mx-auto" />
+          <div class="text-sm font-semibold text-blue-700 mt-1">Anorganik</div>
+        </div>
+      </div>
+      <div class="bin" data-type="b3">
+        <div class="text-center">
+          <img src="images/tempat_b3.png" alt="B3" class="w-16 mx-auto" />
+          <div class="text-sm font-semibold text-red-700 mt-1">B3</div>
+        </div>
+      </div>
     </div>
-    <div class="bin" data-type="anorganik">
-      <img src="images/tempat_anorganik.png" alt="Anorganik" class="w-20">
+
+    <!-- Playfield -->
+    <div id="playfield" class="mb-6">
+      <!-- Sampah akan dimasukkan via JS -->
     </div>
-    <div class="bin" data-type="b3">
-      <img src="images/tempat_b3.png" alt="B3" class="w-20">
+
+    <!-- Info & finish -->
+    <div class="flex justify-between items-center">
+      <div class="text-sm text-gray-700">+10 benar / −5 salah / −5 kalau jatuh</div>
+      <div>
+        <button id="btn-finish" class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow">
+          Selesai
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Area trash items -->
-  <div id="trash-container" class="flex flex-wrap gap-4 justify-center">
-    <img src="images/kulit_pisang.png" class="trash-item" draggable="true" data-type="organik">
-    <img src="images/daun.png" class="trash-item" draggable="true" data-type="organik">
-    <img src="images/botol.png" class="trash-item" draggable="true" data-type="anorganik">
-    <img src="images/kantong_plastik.png" class="trash-item" draggable="true" data-type="anorganik">
-    <img src="images/baterai.png" class="trash-item" draggable="true" data-type="b3">
-    <img src="images/jarum.png" class="trash-item" draggable="true" data-type="b3">
-  </div>
+<script>
+  const trashPool = [
+    { src: "images/kulit_pisang.png", type: "organik" },
+    { src: "images/daun.png", type: "organik" },
+    { src: "images/botol.png", type: "anorganik" },
+    { src: "images/kantong_plastik.png", type: "anorganik" },
+    { src: "images/baterai.png", type: "b3" },
+    { src: "images/jarum.png", type: "b3" },
+  ];
+  let score = 0;
+  let currentTrash = null;
+  let spawnInterval = null;
+  const playfield = document.getElementById("playfield");
+  const scoreEl = document.getElementById("score");
 
-  <div class="mt-8">
-    <button id="back-btn" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md">
-      Kembali ke Game
-    </button>
-  </div>
+  function updateScoreDisplay() {
+    scoreEl.innerText = `Skor: ${score}`;
+  }
 
-  <script>
-    const bins = document.querySelectorAll('.bin');
-    const trashItems = document.querySelectorAll('.trash-item');
-    let score = 0;
+  function spawnTrash() {
+    if (score >= 100) return;
+    if (currentTrash) return; // tunggu selesai dulu
+    const item = trashPool[Math.floor(Math.random() * trashPool.length)];
+    const img = document.createElement("img");
+    img.src = item.src;
+    img.className = "trash";
+    img.dataset.type = item.type;
+    img.style.left = Math.random() * (playfield.clientWidth - 60) + "px";
+    img.style.top = "-80px";
+    img.draggable = true;
 
-    trashItems.forEach(item => {
-      item.addEventListener('dragstart', e => {
-        e.dataTransfer.setData('type', item.dataset.type);
-        e.dataTransfer.setData('src', item.src);
-        setTimeout(() => item.style.display = 'none', 0);
-      });
+    // falling animation (manual)
+    let falling = true;
+    const fallDuration = 5000; // 5s sebelum jatuh full
+    const startTime = performance.now();
 
-      item.addEventListener('dragend', () => {
-        item.style.display = 'block';
-      });
+    function animateFall(now) {
+      if (!falling) return;
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / fallDuration, 1);
+      img.style.top = (-80 + (playfield.clientHeight + 80) * progress) + "px";
+
+      if (progress >= 1) {
+        // jatuh
+        falling = false;
+        if (currentTrash === img) currentTrash = null;
+        playfield.removeChild(img);
+        score = Math.max(0, score - 5);
+        updateScoreDisplay();
+        checkFinish();
+        return;
+      }
+      requestAnimationFrame(animateFall);
+    }
+    requestAnimationFrame(animateFall);
+
+    // drag events
+    img.addEventListener("dragstart", e => {
+      e.dataTransfer.setData("text/plain", "");
+      img.style.opacity = "0.6";
+      img.dataset.dragging = "true";
+      // pause fall while dragging
+      falling = false;
     });
-
-    bins.forEach(bin => {
-      bin.addEventListener('dragover', e => {
-        e.preventDefault();
-        bin.classList.add('hovered');
-      });
-
-      bin.addEventListener('dragleave', () => {
-        bin.classList.remove('hovered');
-      });
-
-      bin.addEventListener('drop', e => {
-        e.preventDefault();
-        bin.classList.remove('hovered');
-
-        const type = e.dataTransfer.getData('type');
-        const src = e.dataTransfer.getData('src');
-
-        if (bin.dataset.type === type) {
-          score++;
-          const img = document.querySelector(`img[src="${src}"]`);
-          img.remove();
-
-          if (score >= 6) {
-            alert('Selamat! Semua sampah berhasil dipilah!');
+    img.addEventListener("dragend", e => {
+      img.style.opacity = "1";
+      delete img.dataset.dragging;
+      // if not dropped into bin, resume falling
+      if (playfield.contains(img)) {
+        falling = true;
+        requestAnimationFrame(now => {
+          // reset startTime so it falls from current position
+          const currentTop = parseFloat(img.style.top);
+          const remainingDistance = playfield.clientHeight + 80 - (currentTop + 80);
+          const remainingTime = (remainingDistance / (playfield.clientHeight + 80)) * fallDuration;
+          const fallStart = performance.now() - (fallDuration - remainingTime);
+          function resumeFall(now2) {
+            if (!falling) return;
+            const elapsed2 = now2 - fallStart;
+            const progress2 = Math.min(elapsed2 / fallDuration, 1);
+            img.style.top = (-80 + (playfield.clientHeight + 80) * progress2) + "px";
+            if (progress2 >= 1) {
+              falling = false;
+              if (currentTrash === img) currentTrash = null;
+              playfield.removeChild(img);
+              score = Math.max(0, score - 5);
+              updateScoreDisplay();
+              checkFinish();
+              return;
+            }
+            requestAnimationFrame(resumeFall);
           }
-        } else {
-          alert('Salah tempat!');
-        }
-      });
+          requestAnimationFrame(resumeFall);
+        });
+      }
     });
 
-    document.getElementById('back-btn').addEventListener('click', () => {
-      window.close(); // Kalau dibuka di popup
-      // Atau kasih instruksi ke user untuk kembali ke game
-      alert("Silakan kembali ke game Ren'Py.");
+    playfield.appendChild(img);
+    currentTrash = img;
+  }
+
+  function checkFinish() {
+    if (score >= 100) {
+      finishGame();
+    } else {
+      // allow next spawn after short delay
+      setTimeout(() => {
+        if (!currentTrash) spawnTrash();
+      }, 500);
+    }
+  }
+
+  // Drop logic on bins
+  const bins = document.querySelectorAll(".bin");
+  bins.forEach(bin => {
+    bin.addEventListener("dragover", e => {
+      e.preventDefault();
+      bin.classList.add("active");
     });
-  </script>
+    bin.addEventListener("dragleave", () => {
+      bin.classList.remove("active");
+    });
+    bin.addEventListener("drop", e => {
+      e.preventDefault();
+      bin.classList.remove("active");
+      if (!currentTrash) return;
+      const trashType = currentTrash.dataset.type;
+      const binType = bin.dataset.type;
+
+      if (trashType === binType) {
+        score += 10;
+        showFeedback("+10", bin);
+      } else {
+        score = Math.max(0, score - 5);
+        showFeedback("-5", bin, true);
+      }
+
+      // remove current trash
+      if (playfield.contains(currentTrash)) {
+        currentTrash.classList.add("fade-out");
+        setTimeout(() => {
+          if (playfield.contains(currentTrash)) playfield.removeChild(currentTrash);
+          currentTrash = null;
+        }, 300);
+      }
+
+      updateScoreDisplay();
+      checkFinish();
+    });
+  });
+
+  function showFeedback(text, target, isBad=false) {
+    const bub = document.createElement("div");
+    bub.innerText = text;
+    bub.className = "absolute font-bold text-lg";
+    bub.style.transition = "transform .6s ease, opacity .6s ease";
+    bub.style.left = target.getBoundingClientRect().left + window.scrollX + target.offsetWidth/2 - 20 + "px";
+    bub.style.top = target.getBoundingClientRect().top + window.scrollY - 30 + "px";
+    bub.style.color = isBad ? "#ef4444" : "#22c55e";
+    document.body.appendChild(bub);
+    setTimeout(() => {
+      bub.style.transform = "translateY(-30px)";
+      bub.style.opacity = "0";
+    }, 10);
+    setTimeout(() => bub.remove(), 700);
+  }
+
+  function finishGame() {
+    const final = score;
+    setTimeout(() => {
+      if (window.renpy && typeof window.renpy.return === "function") {
+        window.renpy.return(final);
+      } else {
+        alert("Mini game selesai! Skor: " + final);
+      }
+    }, 200);
+  }
+
+  // spawn loop:
+  spawnTrash();
+  spawnInterval = setInterval(() => {
+    if (!currentTrash && score < 100) spawnTrash();
+  }, 2000);
+
+  document.getElementById("btn-finish").addEventListener("click", () => {
+    finishGame();
+  });
+
+  // safety: stop when finish
+  function updateScoreDisplay() {
+    scoreEl.innerText = `Skor: ${score}`;
+  }
+  updateScoreDisplay();
+</script>
 </body>
 </html>
