@@ -7,87 +7,259 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   body {
-    background: linear-gradient(135deg, #e0f2f1, #ffffff);
-    font-family: system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 25%, #059669 50%, #10b981 75%, #6ee7b7 85%, #ffffff 100%);
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    position: relative;
+    touch-action: none; /* Prevent default touch scrolling */
   }
+  
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(6, 78, 59, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 60%, rgba(110, 231, 183, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  .main-container {
+    position: relative;
+    z-index: 1;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 24px;
+    box-shadow: 
+      0 20px 40px -12px rgba(6, 78, 59, 0.25),
+      0 0 0 1px rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+  
+  .header-gradient {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
   .trash {
     width: 60px;
     height: 60px;
     position: absolute;
     cursor: grab;
     user-select: none;
-    transition: transform .1s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10;
+    filter: drop-shadow(0 4px 8px rgba(6, 78, 59, 0.15));
+    touch-action: none; /* Prevent scrolling when touching trash */
   }
+  
+  .trash:hover, .trash.touching {
+    transform: scale(1.05);
+    filter: drop-shadow(0 6px 12px rgba(6, 78, 59, 0.25));
+  }
+  
+  .trash.dragging {
+    opacity: 0.8;
+    transform: scale(1.1);
+    z-index: 20;
+  }
+  
   .bin {
-    width: 120px; height: 120px;
-    border: 3px dashed #9ca3af;
-    border-radius: 12px;
+    width: 140px; 
+    height: 140px;
+    border: 3px dashed rgba(6, 78, 59, 0.3);
+    border-radius: 20px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: white;
-    box-shadow: 0 6px 18px -4px rgba(0,0,0,0.08);
-    transition: border-color .2s, background .2s;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(110, 231, 183, 0.1));
+    box-shadow: 
+      0 10px 30px -8px rgba(6, 78, 59, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      inset 0 -1px 0 rgba(6, 78, 59, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
   }
+  
+  .bin:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 15px 40px -10px rgba(6, 78, 59, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(6, 78, 59, 0.15);
+  }
+  
   .bin.active {
-    border-color: #22c55e;
-    background: rgba(34,197,94,0.08);
+    border-color: #10b981;
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.15), rgba(110, 231, 183, 0.25));
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 
+      0 20px 50px -12px rgba(16, 185, 129, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      0 0 0 2px rgba(16, 185, 129, 0.2);
   }
+  
   #playfield {
     position: relative;
     width: 100%;
-    height: 300px;
-    border-radius: 12px;
+    height: 320px;
+    border-radius: 20px;
     overflow: hidden;
-    background: #f9fafb;
-    box-shadow: inset 0 0 12px rgba(0,0,0,0.05);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), rgba(110, 231, 183, 0.1));
+    box-shadow: 
+      inset 0 4px 20px rgba(6, 78, 59, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 8px 25px -8px rgba(6, 78, 59, 0.15);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
   }
+  
+  .score-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(110, 231, 183, 0.1) 100%);
+    backdrop-filter: blur(15px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 
+      0 8px 25px -8px rgba(6, 78, 59, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 0 1px rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .bin-container {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(110, 231, 183, 0.05) 100%);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 
+      0 8px 25px -8px rgba(6, 78, 59, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
   .fade-out {
     animation: fadeOut 0.5s forwards;
   }
-  @keyframes fall {
-    from { top: -80px; }
-    to { top: 260px; }
+  
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(6, 78, 59, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.5rem;
   }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #064e3b 0%, #059669 50%, #10b981 100%);
+    transition: width 0.3s ease;
+    border-radius: 4px;
+  }
+  
   @keyframes fadeOut {
-    to { opacity: 0; transform: scale(.8); }
+    to { 
+      opacity: 0; 
+      transform: scale(0.8) rotate(10deg); 
+    }
+  }
+  
+  .info-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(110, 231, 183, 0.1) 100%);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 
+      0 4px 15px -4px rgba(6, 78, 59, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .feedback-bubble {
+    position: absolute;
+    font-weight: bold;
+    font-size: 1.25rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+  }
+
+  /* Mobile responsive adjustments */
+  @media (max-width: 768px) {
+    .bin {
+      width: 120px;
+      height: 120px;
+    }
+    
+    .trash {
+      width: 50px;
+      height: 50px;
+    }
+    
+    #playfield {
+      height: 280px;
+    }
+    
+    .main-container {
+      padding: 1rem;
+    }
+    
+    .bin-container {
+      padding: 1rem;
+    }
+    
+    .bin-container .flex {
+      gap: 1rem;
+    }
   }
 </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-6">
 
-  <div class="w-full max-w-3xl">
-    <div class="flex justify-between items-center mb-4">
+  <div class="w-full max-w-4xl main-container p-8">
+    <div class="flex justify-between items-start mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-green-700">Sorting Sampah</h1>
-        <p class="text-sm text-gray-600">Tarik sampah ke tempat yang benar sebelum jatuh. Capai skor 100 untuk selesai otomatis.</p>
+        <h1 class="text-4xl font-bold header-gradient mb-2">Sorting Sampah</h1>
+        <p class="text-emerald-700 opacity-80 text-base leading-relaxed max-w-md">
+          Tarik sampah ke tempat yang benar sebelum jatuh. Capai skor 100 untuk selesai otomatis.
+        </p>
       </div>
-      <div class="text-right">
-        <div id="score" class="text-xl font-semibold text-gray-800">Skor: 0</div>
-        <div id="progress" class="text-xs text-gray-500">Target: 100</div>
+      <div class="score-card text-right">
+        <div id="score" class="text-2xl font-bold text-emerald-800 mb-1">Skor: 0</div>
+        <div id="progress" class="text-sm text-emerald-600 opacity-75">Target: 100</div>
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+        </div>
       </div>
     </div>
 
     <!-- Bins -->
-    <div class="flex gap-8 justify-center mb-6">
-      <div class="bin" data-type="organik">
-        <div class="text-center">
-          <img src="images/tempat_organik.png" alt="Organik" class="w-16 mx-auto" />
-          <div class="text-sm font-semibold text-green-700 mt-1">Organik</div>
+    <div class="bin-container mb-8">
+      <div class="flex gap-8 justify-center">
+        <div class="bin" data-type="organik">
+          <div class="text-center">
+            <img src="images/tempat_organik.png" alt="Organik" class="w-20 mx-auto mb-2" />
+            <div class="text-sm font-bold text-emerald-800">Organik</div>
+          </div>
         </div>
-      </div>
-      <div class="bin" data-type="anorganik">
-        <div class="text-center">
-          <img src="images/tempat_anorganik.png" alt="Anorganik" class="w-16 mx-auto" />
-          <div class="text-sm font-semibold text-blue-700 mt-1">Anorganik</div>
+        <div class="bin" data-type="anorganik">
+          <div class="text-center">
+            <img src="images/tempat_anorganik.png" alt="Anorganik" class="w-20 mx-auto mb-2" />
+            <div class="text-sm font-bold text-emerald-800">Anorganik</div>
+          </div>
         </div>
-      </div>
-      <div class="bin" data-type="b3">
-        <div class="text-center">
-          <img src="images/tempat_b3.png" alt="B3" class="w-16 mx-auto" />
-          <div class="text-sm font-semibold text-red-700 mt-1">B3</div>
+        <div class="bin" data-type="b3">
+          <div class="text-center">
+            <img src="images/tempat_b3.png" alt="B3" class="w-20 mx-auto mb-2" />
+            <div class="text-sm font-bold text-emerald-800">B3</div>
+          </div>
         </div>
       </div>
     </div>
@@ -97,9 +269,13 @@
       <!-- Sampah akan dimasukkan via JS -->
     </div>
 
-    <!-- Info & finish -->
-    <div class="flex justify-between items-center">
-      <div class="text-sm text-gray-700">+10 benar / −5 salah / −5 kalau jatuh</div>
+    <!-- Info -->
+    <div class="info-card">
+      <div class="text-center text-emerald-700 font-medium">
+        <span class="text-emerald-600">+10</span> untuk jawaban benar • 
+        <span class="text-red-500">-5</span> untuk jawaban salah • 
+        <span class="text-red-500">-5</span> jika sampah jatuh
+      </div>
     </div>
   </div>
 
@@ -117,14 +293,209 @@
   let spawnInterval = null;
   const playfield = document.getElementById("playfield");
   const scoreEl = document.getElementById("score");
+  const progressFill = document.getElementById("progress-fill");
+
+  // Touch/drag state
+  let isDragging = false;
+  let draggedTrash = null;
+  let touchOffset = { x: 0, y: 0 };
 
   function updateScoreDisplay() {
     scoreEl.innerText = `Skor: ${score}`;
+    const progress = Math.min((score / 100) * 100, 100);
+    progressFill.style.width = progress + '%';
+  }
+
+  function getEventPos(e) {
+    if (e.touches && e.touches.length > 0) {
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+  }
+
+  function setupTrashEvents(img) {
+    let falling = true;
+    const fallDuration = 5000;
+    const startTime = performance.now();
+
+    // Mouse events
+    img.addEventListener("dragstart", e => {
+      e.dataTransfer.setData("text/plain", "");
+      img.style.opacity = "0.6";
+      img.dataset.dragging = "true";
+      falling = false;
+    });
+
+    img.addEventListener("dragend", e => {
+      img.style.opacity = "1";
+      delete img.dataset.dragging;
+      if (playfield.contains(img)) {
+        resumeFalling();
+      }
+    });
+
+    // Touch events
+    img.addEventListener("touchstart", e => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = img.getBoundingClientRect();
+      
+      touchOffset.x = touch.clientX - rect.left;
+      touchOffset.y = touch.clientY - rect.top;
+      
+      isDragging = true;
+      draggedTrash = img;
+      falling = false;
+      
+      img.classList.add("dragging", "touching");
+      img.style.zIndex = "20";
+    });
+
+    img.addEventListener("touchmove", e => {
+      if (!isDragging || draggedTrash !== img) return;
+      e.preventDefault();
+      
+      const touch = e.touches[0];
+      const playfieldRect = playfield.getBoundingClientRect();
+      
+      // Calculate new position relative to playfield
+      let newX = touch.clientX - playfieldRect.left - touchOffset.x;
+      let newY = touch.clientY - playfieldRect.top - touchOffset.y;
+      
+      // Keep within playfield bounds
+      newX = Math.max(0, Math.min(newX, playfield.clientWidth - 60));
+      newY = Math.max(-80, Math.min(newY, playfield.clientHeight));
+      
+      img.style.left = newX + "px";
+      img.style.top = newY + "px";
+
+      // Check if over any bin and highlight it
+      const bins = document.querySelectorAll(".bin");
+      bins.forEach(bin => bin.classList.remove("active"));
+      
+      const binUnderTouch = getElementUnderPoint(touch.clientX, touch.clientY, ".bin");
+      if (binUnderTouch) {
+        binUnderTouch.classList.add("active");
+      }
+    });
+
+    img.addEventListener("touchend", e => {
+      if (!isDragging || draggedTrash !== img) return;
+      e.preventDefault();
+      
+      isDragging = false;
+      draggedTrash = null;
+      
+      img.classList.remove("dragging", "touching");
+      img.style.zIndex = "10";
+      
+      const bins = document.querySelectorAll(".bin");
+      bins.forEach(bin => bin.classList.remove("active"));
+      
+      // Check if dropped on a bin
+      const touch = e.changedTouches[0];
+      const binUnderTouch = getElementUnderPoint(touch.clientX, touch.clientY, ".bin");
+      
+      if (binUnderTouch && currentTrash === img) {
+        // Dropped on bin
+        handleDrop(img, binUnderTouch);
+      } else if (playfield.contains(img)) {
+        // Dropped back on playfield, resume falling
+        resumeFalling();
+      }
+    });
+
+    function resumeFalling() {
+      if (!playfield.contains(img)) return;
+      falling = true;
+      requestAnimationFrame(now => {
+        const currentTop = parseFloat(img.style.top);
+        const remainingDistance = playfield.clientHeight + 80 - (currentTop + 80);
+        const remainingTime = (remainingDistance / (playfield.clientHeight + 80)) * fallDuration;
+        const fallStart = performance.now() - (fallDuration - remainingTime);
+        
+        function resumeFall(now2) {
+          if (!falling) return;
+          const elapsed2 = now2 - fallStart;
+          const progress2 = Math.min(elapsed2 / fallDuration, 1);
+          img.style.top = (-80 + (playfield.clientHeight + 80) * progress2) + "px";
+          
+          if (progress2 >= 1) {
+            falling = false;
+            if (currentTrash === img) currentTrash = null;
+            if (playfield.contains(img)) playfield.removeChild(img);
+            score = Math.max(0, score - 5);
+            updateScoreDisplay();
+            checkFinish();
+            return;
+          }
+          requestAnimationFrame(resumeFall);
+        }
+        requestAnimationFrame(resumeFall);
+      });
+    }
+
+    // Initial falling animation
+    function animateFall(now) {
+      if (!falling) return;
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / fallDuration, 1);
+      img.style.top = (-80 + (playfield.clientHeight + 80) * progress) + "px";
+
+      if (progress >= 1) {
+        falling = false;
+        if (currentTrash === img) currentTrash = null;
+        if (playfield.contains(img)) playfield.removeChild(img);
+        score = Math.max(0, score - 5);
+        updateScoreDisplay();
+        checkFinish();
+        return;
+      }
+      requestAnimationFrame(animateFall);
+    }
+    requestAnimationFrame(animateFall);
+  }
+
+  function getElementUnderPoint(x, y, selector) {
+    const elements = document.querySelectorAll(selector);
+    for (let element of elements) {
+      const rect = element.getBoundingClientRect();
+      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+        return element;
+      }
+    }
+    return null;
+  }
+
+  function handleDrop(trash, bin) {
+    const trashType = trash.dataset.type;
+    const binType = bin.dataset.type;
+
+    if (trashType === binType) {
+      score += 10;
+      showFeedback("+10", bin);
+    } else {
+      score = Math.max(0, score - 5);
+      showFeedback("-5", bin, true);
+    }
+
+    // Remove current trash
+    if (playfield.contains(trash)) {
+      trash.classList.add("fade-out");
+      setTimeout(() => {
+        if (playfield.contains(trash)) playfield.removeChild(trash);
+        if (currentTrash === trash) currentTrash = null;
+      }, 300);
+    }
+
+    updateScoreDisplay();
+    checkFinish();
   }
 
   function spawnTrash() {
     if (score >= 100) return;
-    if (currentTrash) return; // tunggu selesai dulu
+    if (currentTrash) return;
+    
     const item = trashPool[Math.floor(Math.random() * trashPool.length)];
     const img = document.createElement("img");
     img.src = item.src;
@@ -134,72 +505,7 @@
     img.style.top = "-80px";
     img.draggable = true;
 
-    // falling animation (manual)
-    let falling = true;
-    const fallDuration = 5000; // 5s sebelum jatuh full
-    const startTime = performance.now();
-
-    function animateFall(now) {
-      if (!falling) return;
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / fallDuration, 1);
-      img.style.top = (-80 + (playfield.clientHeight + 80) * progress) + "px";
-
-      if (progress >= 1) {
-        // jatuh
-        falling = false;
-        if (currentTrash === img) currentTrash = null;
-        playfield.removeChild(img);
-        score = Math.max(0, score - 5);
-        updateScoreDisplay();
-        checkFinish();
-        return;
-      }
-      requestAnimationFrame(animateFall);
-    }
-    requestAnimationFrame(animateFall);
-
-    // drag events
-    img.addEventListener("dragstart", e => {
-      e.dataTransfer.setData("text/plain", "");
-      img.style.opacity = "0.6";
-      img.dataset.dragging = "true";
-      // pause fall while dragging
-      falling = false;
-    });
-    img.addEventListener("dragend", e => {
-      img.style.opacity = "1";
-      delete img.dataset.dragging;
-      // if not dropped into bin, resume falling
-      if (playfield.contains(img)) {
-        falling = true;
-        requestAnimationFrame(now => {
-          // reset startTime so it falls from current position
-          const currentTop = parseFloat(img.style.top);
-          const remainingDistance = playfield.clientHeight + 80 - (currentTop + 80);
-          const remainingTime = (remainingDistance / (playfield.clientHeight + 80)) * fallDuration;
-          const fallStart = performance.now() - (fallDuration - remainingTime);
-          function resumeFall(now2) {
-            if (!falling) return;
-            const elapsed2 = now2 - fallStart;
-            const progress2 = Math.min(elapsed2 / fallDuration, 1);
-            img.style.top = (-80 + (playfield.clientHeight + 80) * progress2) + "px";
-            if (progress2 >= 1) {
-              falling = false;
-              if (currentTrash === img) currentTrash = null;
-              playfield.removeChild(img);
-              score = Math.max(0, score - 5);
-              updateScoreDisplay();
-              checkFinish();
-              return;
-            }
-            requestAnimationFrame(resumeFall);
-          }
-          requestAnimationFrame(resumeFall);
-        });
-      }
-    });
-
+    setupTrashEvents(img);
     playfield.appendChild(img);
     currentTrash = img;
   }
@@ -208,60 +514,40 @@
     if (score >= 100) {
       finishGame();
     } else {
-      // allow next spawn after short delay
       setTimeout(() => {
         if (!currentTrash) spawnTrash();
       }, 500);
     }
   }
 
-  // Drop logic on bins
+  // Drop logic on bins (for mouse drag & drop)
   const bins = document.querySelectorAll(".bin");
   bins.forEach(bin => {
     bin.addEventListener("dragover", e => {
       e.preventDefault();
       bin.classList.add("active");
     });
+    
     bin.addEventListener("dragleave", () => {
       bin.classList.remove("active");
     });
+    
     bin.addEventListener("drop", e => {
       e.preventDefault();
       bin.classList.remove("active");
       if (!currentTrash) return;
-      const trashType = currentTrash.dataset.type;
-      const binType = bin.dataset.type;
-
-      if (trashType === binType) {
-        score += 10;
-        showFeedback("+10", bin);
-      } else {
-        score = Math.max(0, score - 5);
-        showFeedback("-5", bin, true);
-      }
-
-      // remove current trash
-      if (playfield.contains(currentTrash)) {
-        currentTrash.classList.add("fade-out");
-        setTimeout(() => {
-          if (playfield.contains(currentTrash)) playfield.removeChild(currentTrash);
-          currentTrash = null;
-        }, 300);
-      }
-
-      updateScoreDisplay();
-      checkFinish();
+      handleDrop(currentTrash, bin);
     });
   });
 
   function showFeedback(text, target, isBad=false) {
     const bub = document.createElement("div");
     bub.innerText = text;
-    bub.className = "absolute font-bold text-lg";
+    bub.className = "feedback-bubble";
     bub.style.transition = "transform .6s ease, opacity .6s ease";
     bub.style.left = target.getBoundingClientRect().left + window.scrollX + target.offsetWidth/2 - 20 + "px";
     bub.style.top = target.getBoundingClientRect().top + window.scrollY - 30 + "px";
-    bub.style.color = isBad ? "#ef4444" : "#22c55e";
+    bub.style.color = isBad ? "#dc2626" : "#059669";
     document.body.appendChild(bub);
     setTimeout(() => {
       bub.style.transform = "translateY(-30px)";
@@ -270,36 +556,33 @@
     setTimeout(() => bub.remove(), 700);
   }
 
- function finishGame() {
+  function finishGame() {
     const final = score;
 
-    // Kirim ke Ren'Py kalau ada
     if (window.renpy && typeof window.renpy.return === "function") {
       window.renpy.return(final);
-      // kasih waktu singkat agar Ren'Py terima, lalu tutup
       setTimeout(() => {
         window.close();
       }, 200);
     } else {
-      // Fallback: tampilkan pesan, lalu tutup setelah user OK
       alert("Mini game selesai! Skor: " + final);
       window.close();
     }
   }
-  // spawn loop:
+
+  // Prevent default touch behaviors that might interfere
+  document.addEventListener("touchmove", e => {
+    if (isDragging) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Initialize game
   spawnTrash();
   spawnInterval = setInterval(() => {
     if (!currentTrash && score < 100) spawnTrash();
   }, 2000);
 
-  document.getElementById("btn-finish").addEventListener("click", () => {
-    finishGame();
-  });
-
-  // safety: stop when finish
-  function updateScoreDisplay() {
-    scoreEl.innerText = `Skor: ${score}`;
-  }
   updateScoreDisplay();
 </script>
 </body>
